@@ -3,6 +3,8 @@ const nodes : number = 5
 class LineToTriangleStage {
     canvas : HTMLCanvasElement = document.createElement('canvas')
     context : CanvasRenderingContext2D
+    lts : LineToTriangle = new LineToTriangle()
+    animator : Animator = new Animator()
 
     initCanvas() {
         this.canvas.width = w
@@ -14,11 +16,19 @@ class LineToTriangleStage {
     render() {
         this.context.fillStyle = '#212121'
         this.context.fillRect(0, 0, w, h)
+        this.lts.draw(this.context)
     }
 
     handleTap() {
         this.canvas.onmousedown = () => {
-
+            this.lts.startUpdating(() => {
+                this.animator.start(() => {
+                    this.render()
+                    this.lts.update(() => {
+                        this.animator.stop()
+                    })
+                })
+            })
         }
     }
 
