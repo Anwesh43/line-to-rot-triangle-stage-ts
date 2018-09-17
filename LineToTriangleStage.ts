@@ -1,4 +1,5 @@
 const w : number = window.innerWidth, h : number = window.innerHeight
+const nodes : number = 5
 class LineToTriangleStage {
     canvas : HTMLCanvasElement = document.createElement('canvas')
     context : CanvasRenderingContext2D
@@ -68,5 +69,66 @@ class Animator {
             this.animated = false
             clearInterval(this.interval)
         }
+    }
+}
+
+class LTSNode {
+    state : State = new State()
+    next : LTSNode
+    prev : LTSNode
+
+    constructor(private i : number) {
+        this.addNeighbor()
+    }
+
+    addNeighbor() {
+        if (this.i < nodes - 1) {
+            this.next = new LTSNode(this.i + 1)
+            this.next.prev = this
+        }
+    }
+
+    draw(context : CanvasRenderingContext2D) {
+        const gap : number = h / (nodes + 1)
+        context.lineWidth = Math.min(w, h) / 60
+        context.lineCap = 'round'
+        context.strokeStyle = '#0D47A1'
+        context.save()
+        context.translate(w/2, gap)
+        for (var j = 0; j < 2; j++) {
+            const sc = Math.min(0.5, Math.max(this.state.scale - 0.5 * j, 0)) * 2
+            const sc1 = Math.min(0.5, sc) * 2
+            const sc2 = Math.min(0.5, Math.max(sc - 0.5, 0))
+            context.save()
+            context.translate((w/2) * sc2, 0)
+            context.rotate(Math.PI * sc2)
+            context.beginPath()
+            context.moveTo(0, -gap/3)
+            context.lineTo(2 * gap/3 * sc1, 0)
+            context.lineTo(0, gap/3)
+            context.stroke()
+            context.restore()
+        }
+        context.restore()
+    }
+
+    update(cb : Function) {
+        this.state.update(cb)
+    }
+
+    startUpdating(cb : Function) {
+        this.state.startUpdating(cb)
+    }
+
+    getNext(dir : number, cb : Function) : LTSNode {
+        var curr : LTSNode = this.prev
+        if (dir == 1) {
+            curr = this.prev
+        }
+        if (curr) {
+            return curr
+        }
+        cb()
+        return this
     }
 }
