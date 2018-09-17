@@ -26,6 +26,7 @@ class LineToTriangleStage {
                     this.render()
                     this.lts.update(() => {
                         this.animator.stop()
+                        this.render()
                     })
                 })
             })
@@ -46,12 +47,12 @@ class State {
     prevScale : number = 0
 
     update(cb : Function) {
-        this.scale += 0.1 * this.dir
+        this.scale += 0.025 * this.dir
         if (Math.abs(this.scale - this.prevScale) > 1) {
             this.scale = this.prevScale + this.dir
             this.dir = 0
             this.prevScale = this.scale
-            cb(this.prevScale)
+            cb()
         }
     }
 
@@ -104,22 +105,26 @@ class LTSNode {
         context.lineCap = 'round'
         context.strokeStyle = '#0D47A1'
         context.save()
-        context.translate(w/2, gap)
+        context.translate(w/2, gap * (this.i + 1))
         for (var j = 0; j < 2; j++) {
+            const sf = 1 - 2 * (j % 2)
             const sc = Math.min(0.5, Math.max(this.state.scale - 0.5 * j, 0)) * 2
             const sc1 = Math.min(0.5, sc) * 2
-            const sc2 = Math.min(0.5, Math.max(sc - 0.5, 0))
+            const sc2 = Math.min(0.5, Math.max(sc - 0.5, 0)) * 2
             context.save()
-            context.translate((w/2) * sc2, 0)
+            context.translate((w/2) * sc2 * sf, 0)
             context.rotate(Math.PI * sc2)
             context.beginPath()
             context.moveTo(0, -gap/3)
-            context.lineTo(2 * gap/3 * sc1, 0)
+            context.lineTo(2 * gap/3 * sc1 * sf, 0)
             context.lineTo(0, gap/3)
             context.stroke()
             context.restore()
         }
         context.restore()
+        if (this.next) {
+            this.next.draw(context)
+        }
     }
 
     update(cb : Function) {
@@ -133,7 +138,7 @@ class LTSNode {
     getNext(dir : number, cb : Function) : LTSNode {
         var curr : LTSNode = this.prev
         if (dir == 1) {
-            curr = this.prev
+            curr = this.next
         }
         if (curr) {
             return curr
@@ -144,11 +149,12 @@ class LTSNode {
 }
 
 class   LineToTriangle {
-    curr : LTSNode = new LTSNode(0)
+    root : LTSNode = new LTSNode(0)
+    curr : LTSNode = this.root
     dir : number = 1
 
     draw(context : CanvasRenderingContext2D) {
-
+        this.root.draw(context)
     }
 
     update(cb : Function) {
